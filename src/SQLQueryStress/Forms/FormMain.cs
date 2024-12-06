@@ -105,10 +105,10 @@ namespace SQLQueryStress
         private Label minDuration_textBox = new Label();
         private Label maxDuration_textBox = new Label();
         private Label avgDuration_textBox = new Label();
-        private Label totalReads_textBox = new Label();
-        private Label totalWrites_textBox = new Label();
-        private Label totalCpu_textBox = new Label();
-        private Label totalWaits_textBox = new Label();
+        private Label avgReads_textBox = new Label();
+        private Label avgWrites_textBox = new Label();
+        private Label avgCpu_textBox = new Label();
+        private Label avgWaits_textBox = new Label();
         private TableLayoutPanel statsPanel;
         public FormMain(CommandLineOptions runParameters) : this()
         {
@@ -722,10 +722,10 @@ namespace SQLQueryStress
             AddStatsRow(statsPanel, "Min Duration (ms)", minDuration_textBox, 0);
             AddStatsRow(statsPanel, "Max Duration (ms)", maxDuration_textBox, 1);
             AddStatsRow(statsPanel, "Avg Duration (ms)", avgDuration_textBox, 2);
-            AddStatsRow(statsPanel, "Total Reads", totalReads_textBox, 3);
-            AddStatsRow(statsPanel, "Total Writes", totalWrites_textBox, 4);
-            AddStatsRow(statsPanel, "Total CPU (ms)", totalCpu_textBox, 5);
-            AddStatsRow(statsPanel, "Total Waits (ms)", totalWaits_textBox, 6);
+            AddStatsRow(statsPanel, "Avg Reads", avgReads_textBox, 3);
+            AddStatsRow(statsPanel, "Avg Writes", avgWrites_textBox, 4);
+            AddStatsRow(statsPanel, "Avg CPU (ms)", avgCpu_textBox, 5);
+            AddStatsRow(statsPanel, "Avg Waits (ms)", avgWaits_textBox, 6);
 
             // Add Gantt chart and stats panel to tableLayoutPanel3
             tableLayoutPanel3.Controls.Add(ganttChart, 0, 1);
@@ -739,6 +739,9 @@ namespace SQLQueryStress
             var maxDur = UInt64.MinValue;
             var totDur = (UInt64)0;
             var eventCount = (UInt64)0;
+            var totReads = (UInt64)0;
+            var totWrites = (UInt64)0;
+            var totCpu = (UInt64)0;
             try
             {
                 foreach (var @event in _events)
@@ -746,20 +749,32 @@ namespace SQLQueryStress
                     foreach (var ExEvent in @event.Value)
                     {
                       //  Debug.WriteLine($"Event=={ExEvent.Name}");
-                        if (ExEvent.Name == "sql_batch_completed")
-                        {
-                            eventCount++;
-                            if(!ExEvent.Fields.TryGetValue("duration", out var odur))
-                            {
-                                continue;
-                            }
+                      if (ExEvent.Name == "sql_batch_completed")
+                      {
+                          eventCount++;
+                          if (!ExEvent.Fields.TryGetValue("duration", out var odur))
+                          {
+                              continue;
+                          }
 
-                            var duration = (UInt64)odur;
-                            if (duration < minDur) minDur = duration;
-                            if (duration >maxDur ) maxDur = duration;
-                            totDur = duration++;
+                          var duration = (UInt64)odur;
+                          if (duration < minDur) minDur = duration;
+                          if (duration > maxDur) maxDur = duration;
+                          totDur = duration++;
+                          if (!ExEvent.Fields.TryGetValue("logical_reads", out var oreads))
+                          {
+                              continue;
+                          }
 
-                        }
+                          if (!ExEvent.Fields.TryGetValue("writes", out var owrites))
+                          {
+                              continue;
+                          }
+
+                          totReads += (UInt64)oreads;
+                          totWrites += (UInt64)owrites;
+
+                      }
                     }
                 }
                
@@ -775,6 +790,8 @@ namespace SQLQueryStress
                 minDuration_textBox.Text = minDur.ToString();
                 maxDuration_textBox.Text = maxDur.ToString();
                 avgDuration_textBox.Text = (totDur / eventCount).ToString();
+                avgReads_textBox.Text = (totReads / eventCount).ToString();
+                avgWrites_textBox.Text = (totWrites / eventCount).ToString();
                 statsPanel.Invalidate();
             }
             
