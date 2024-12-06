@@ -99,6 +99,7 @@ namespace SQLQueryStress
         private readonly ConcurrentDictionary<Guid, List<IXEvent>> _events = new();
         private readonly List<GanttItem> _ganttItems = new ();
         //private BackgroundWorker ExtendedEventsReader;
+        private readonly Random _random = new Random(42);
 
         private Label minDuration_textBox = new Label();
         private Label maxDuration_textBox = new Label();
@@ -376,7 +377,7 @@ namespace SQLQueryStress
 
             var engine = new LoadEngine(_settings.MainDbConnectionInfo.ConnectionString, _settings.MainQuery, _settings.NumThreads, _settings.NumIterations,
                 _settings.ParamQuery, _settings.ParamMappings, paramConnectionInfo.ConnectionString, _settings.CommandTimeout, _settings.CollectIoStats,
-                _settings.CollectTimeStats, _settings.ForceDataRetrieval, _settings.KillQueriesOnCancel, _backgroundWorkerCTS,ganttChart,_events);
+                _settings.CollectTimeStats, _settings.ForceDataRetrieval, _settings.KillQueriesOnCancel, _backgroundWorkerCTS,ganttChart,_events,this);
             //extendedEventsReader = engine.extendedEventsReader;
             backgroundWorker1.RunWorkerAsync(engine);
 
@@ -672,6 +673,29 @@ namespace SQLQueryStress
             tableLayoutPanel3.Controls.Add(elemHost, 0, 0);
         }
 
+        internal void AddGanttItem(int row, DateTime startTime, int durationMS, LoadEngine.QueryOutput queryOutput)
+        {
+            _ganttItems.Add(new GanttItem
+            {
+                Row = row,
+                StartTime = startTime,
+                Duration = TimeSpan.FromMilliseconds(durationMS),
+                Color = Color.FromArgb(_random.Next(64, 255), _random.Next(64, 255), _random.Next(64, 255)),
+                QueryOutput = queryOutput
+            });
+        }
+        protected override void WndProc(ref Message m)
+        {
+            switch (m.Msg)
+            {
+                case GanttMessages.WM_ONXEVENT:
+                    ganttChart.FitToData();
+                    break;
+                default:
+                    base.WndProc(ref m);
+                    break;
+            }
+        }
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);

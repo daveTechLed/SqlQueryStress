@@ -8,18 +8,18 @@ namespace SQLQueryStress.Controls;
 public static class GanttMessages
 {
     public const int WM_USER = 0x0400;
-    public const int WM_FIT_TO_DATA = WM_USER + 1;
+    public const int WM_ONXEVENT = WM_USER + 1;
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-    public static void SendFitToData(Control ganttChart)
+    public static void SendFitToData(FormMain formMain)
     {
-        if (!ganttChart.IsDisposed && ganttChart.IsHandleCreated)
+        if (!formMain.IsDisposed && formMain.IsHandleCreated)
         {
-            ganttChart.BeginInvoke(new Action(() =>
+            formMain.BeginInvoke(new Action(() =>
             {
-                Debug.WriteLine("Sending FIT_TO_DATA message");
+                Debug.WriteLine("Sending ONXEVENT message");
 
-                SendMessage(ganttChart.Handle, WM_FIT_TO_DATA, IntPtr.Zero, IntPtr.Zero);
+                SendMessage(formMain.Handle, WM_ONXEVENT, IntPtr.Zero, IntPtr.Zero);
             }));
         }
     }

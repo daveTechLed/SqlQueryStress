@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.XEvent.XELite;
 using SQLQueryStress.Controls;
@@ -21,7 +22,7 @@ public partial class LoadEngine
     private readonly string _connectionString;
     private readonly ConcurrentDictionary<Guid, List<IXEvent>> _events = new();
     private readonly bool _forceDataRetrieval;
-    private readonly GanttChartControl _ganttChart;
+   // private readonly GanttChartControl _ganttChart;
     private readonly int _iterations;
     private readonly bool _killQueriesOnCancel;
     private readonly string _paramConnectionString;
@@ -34,14 +35,17 @@ public partial class LoadEngine
     private Task _extendedEventReaderTask;
     private ExtendedEventsReader _extendedEventsReader;
     private int _queryDelay;
+    private readonly FormMain _formMain;
 
     public LoadEngine(string connectionString, string query, int threads, int iterations, string paramQuery,
         Dictionary<string, string> paramMappings, string paramConnectionString, int commandTimeout,
         bool collectIoStats, bool collectTimeStats, bool forceDataRetrieval, bool killQueriesOnCancel,
         CancellationTokenSource cts, GanttChartControl ganttChart,
-        ConcurrentDictionary<Guid, List<IXEvent>> events)
+        ConcurrentDictionary<Guid, List<IXEvent>> events,
+        FormMain formMain)
     {
         _events = events;
+        _formMain = formMain;
         //Set the min pool size so that the pool does not have
         //to get allocated in real-time
         var builder = new SqlConnectionStringBuilder(connectionString)
@@ -61,7 +65,7 @@ public partial class LoadEngine
         _commandTimeout = commandTimeout;
         _forceDataRetrieval = forceDataRetrieval;
         _killQueriesOnCancel = killQueriesOnCancel;
-        _ganttChart = ganttChart;
+      
     }
 
     public static bool ExecuteCommand(string connectionString, string sql)
@@ -134,7 +138,7 @@ public partial class LoadEngine
 
             var input = new QueryInput(statsComm, queryComm,
                 _iterations, _forceDataRetrieval, _queryDelay, worker, _killQueriesOnCancel,
-                _threads, i, _ganttChart);
+                _threads, i);
 
             var theThread = new Thread(input.StartLoadThread)
                 { Priority = ThreadPriority.BelowNormal, IsBackground = true };
@@ -228,11 +232,11 @@ public partial class LoadEngine
             if (!QueryOutInfo.TryTake(out var theOut))
                 break;
 
-            _ganttChart.AddGanttItem(theOut.ThreadNumber, theOut.startTime, (int)theOut.Time.TotalMilliseconds, theOut);
+            _formMain.AddGanttItem(theOut.ThreadNumber, theOut.startTime, (int)theOut.Time.TotalMilliseconds, theOut);
 
         }
 
-        GanttMessages.SendFitToData(_ganttChart);
+        GanttMessages.SendFitToData(_formMain);
     }
 
     private static class ParamServer
@@ -310,18 +314,16 @@ public partial class LoadEngine
         private readonly int _queryDelay;
         private readonly int _threadNumber;
         private readonly BackgroundWorker _backgroundWorker;
-        private readonly GanttChartControl _ganntChart;
-
+     
         public QueryInput(SqlCommand statsComm, SqlCommand queryComm,
             //                Queue<queryOutput> queryOutInfo,
-            int iterations, bool forceDataRetrieval, int queryDelay, BackgroundWorker backgroundWorker, bool killQueriesOnCancel, int numWorkerThreads, int threadNumber, GanttChartControl ganttChart)
+            int iterations, bool forceDataRetrieval, int queryDelay, BackgroundWorker backgroundWorker, bool killQueriesOnCancel, int numWorkerThreads, int threadNumber)
         {
             _queryComm = queryComm;
             _iterations = iterations;
             _forceDataRetrieval = forceDataRetrieval;
             _queryDelay = queryDelay;
-            _ganntChart = ganttChart;
-
+           
             this._backgroundWorker = backgroundWorker;
 
             if (killQueriesOnCancel)

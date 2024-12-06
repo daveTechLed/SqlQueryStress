@@ -20,7 +20,6 @@ namespace SQLQueryStress.Controls
         private readonly int _rowSpacing = 4;
         private DateTime _ganttStartTime; 
         private readonly List<GanttItem> _ganttItems;
-        private readonly Random _random = new Random(42);
         private ToolTip _tooltip = new ToolTip();
         private Point _lastMousePosition;
         private const float MIN_SCALE = 100.0f; // 0.1 pixel per millisecond
@@ -75,17 +74,7 @@ namespace SQLQueryStress.Controls
             _chartPanel.Invalidate();
         }
 
-        internal void AddGanttItem(int row, DateTime startTime, int durationMS, LoadEngine.QueryOutput queryOutput)
-        {
-            _ganttItems.Add(new GanttItem
-            {
-                Row = row,
-                StartTime = startTime,
-                Duration = TimeSpan.FromMilliseconds(durationMS),
-                Color = Color.FromArgb(_random.Next(64, 255), _random.Next(64, 255), _random.Next(64, 255)),
-                QueryOutput = queryOutput
-            });
-        }
+
 
         public void ClearItems(){
             _ganttStartTime = DateTime.Now;
@@ -315,17 +304,6 @@ namespace SQLQueryStress.Controls
             }
         }
 
-        protected override void WndProc(ref Message m)
-        {
-            switch (m.Msg)
-            {
-                case GanttMessages.WM_FIT_TO_DATA:
-                    FitToData();
-                    break;
-                default:
-                    base.WndProc(ref m);
-                    break;
-            }
-        }
+      
     }
 } 
