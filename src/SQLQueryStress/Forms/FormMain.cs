@@ -99,6 +99,14 @@ namespace SQLQueryStress
         private readonly ConcurrentDictionary<Guid, List<IXEvent>> _events = new();
         //private BackgroundWorker ExtendedEventsReader;
 
+        private Label minDuration_textBox = new Label();
+        private Label maxDuration_textBox = new Label();
+        private Label avgDuration_textBox = new Label();
+        private Label totalReads_textBox = new Label();
+        private Label totalWrites_textBox = new Label();
+        private Label totalCpu_textBox = new Label();
+        private Label totalWaits_textBox = new Label();
+
         public FormMain(CommandLineOptions runParameters) : this()
         {
             _runParameters = runParameters;
@@ -671,9 +679,47 @@ namespace SQLQueryStress
             ganttChart = new GanttChartControl(_events);
             ganttChart.Dock = DockStyle.Fill;
 
-            // Add it to the bottom row of tableLayoutPanel3
+            // Create stats panel
+            var statsPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 7
+            };
+
+            // Add labels and textboxes
+            AddStatsRow(statsPanel, "Min Duration (ms)", minDuration_textBox, 0);
+            AddStatsRow(statsPanel, "Max Duration (ms)", maxDuration_textBox, 1);
+            AddStatsRow(statsPanel, "Avg Duration (ms)", avgDuration_textBox, 2);
+            AddStatsRow(statsPanel, "Total Reads", totalReads_textBox, 3);
+            AddStatsRow(statsPanel, "Total Writes", totalWrites_textBox, 4);
+            AddStatsRow(statsPanel, "Total CPU (ms)", totalCpu_textBox, 5);
+            AddStatsRow(statsPanel, "Total Waits (ms)", totalWaits_textBox, 6);
+
+            // Add Gantt chart and stats panel to tableLayoutPanel3
             tableLayoutPanel3.Controls.Add(ganttChart, 0, 1);
-            tableLayoutPanel3.SetColumnSpan(ganttChart, 2); // Span both columns
+            tableLayoutPanel3.Controls.Add(statsPanel, 1, 1);
+            tableLayoutPanel3.SetColumnSpan(ganttChart, 1);
+        }
+
+        private void AddStatsRow(TableLayoutPanel panel, string labelText, Label textBox, int row)
+        {
+            var label = new Label
+            {
+                Text = labelText,
+                Dock = DockStyle.Fill,
+                Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold),
+                AutoSize = true
+            };
+
+            textBox.BackColor = System.Drawing.Color.Black;
+            textBox.Font = new System.Drawing.Font("Courier New", 15.75F, System.Drawing.FontStyle.Bold);
+            textBox.ForeColor = System.Drawing.Color.Lime;
+            textBox.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            textBox.Dock = DockStyle.Fill;
+
+            panel.Controls.Add(label, 0, row);
+            panel.Controls.Add(textBox, 1, row);
         }
 
         private void elapsedTime_textBox_Click(object sender, EventArgs e)
