@@ -97,6 +97,7 @@ namespace SQLQueryStress
 
         private GanttChartControl ganttChart;
         private readonly ConcurrentDictionary<Guid, List<IXEvent>> _events = new();
+        private readonly List<GanttItem> _ganttItems = new ();
         //private BackgroundWorker ExtendedEventsReader;
 
         private Label minDuration_textBox = new Label();
@@ -676,7 +677,7 @@ namespace SQLQueryStress
             base.OnLoad(e);
 
             // Create and configure Gantt chart
-            ganttChart = new GanttChartControl(_events);
+            ganttChart = new GanttChartControl(_events,_ganttItems);
             ganttChart.Dock = DockStyle.Fill;
 
             // Create stats panel

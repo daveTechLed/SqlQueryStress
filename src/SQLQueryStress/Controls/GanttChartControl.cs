@@ -18,8 +18,8 @@ namespace SQLQueryStress.Controls
         private float _timeScale = 2000.0f; // pixels per second (start at 2 pixels per millisecond)
         private readonly int _rowHeight = 20;
         private readonly int _rowSpacing = 4;
-        private DateTime _ganttStartTime;
-        private readonly List<GanttItem> _ganttItems = new List<GanttItem>();
+        private DateTime _ganttStartTime; 
+        private readonly List<GanttItem> _ganttItems;
         private readonly Random _random = new Random(42);
         private ToolTip _tooltip = new ToolTip();
         private Point _lastMousePosition;
@@ -29,8 +29,9 @@ namespace SQLQueryStress.Controls
 
         private readonly ConcurrentDictionary<Guid, List<IXEvent>> _events;
 
-        public GanttChartControl(ConcurrentDictionary<Guid, List<IXEvent>> events)
+        public GanttChartControl(ConcurrentDictionary<Guid, List<IXEvent>> events,List<GanttItem> ganttItems)
         {
+            _ganttItems = ganttItems;
             InitializeComponents();
             InitializeGanttChart();
         
