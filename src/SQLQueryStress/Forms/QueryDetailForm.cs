@@ -43,7 +43,6 @@ namespace SQLQueryStress.Forms
             
             var customRows = contextEvents.Select(xEvent => {
                 var sqlText = xEvent.Actions.FirstOrDefault(x => x.Key == "sql_text");
-                var empty = xEvent.Actions.FirstOrDefault(x => x.Key == "empty");
                 return new
                 {
                     Name = xEvent.Name,

@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -108,7 +109,7 @@ namespace SQLQueryStress
         private Label totalWrites_textBox = new Label();
         private Label totalCpu_textBox = new Label();
         private Label totalWaits_textBox = new Label();
-
+        private TableLayoutPanel statsPanel;
         public FormMain(CommandLineOptions runParameters) : this()
         {
             _runParameters = runParameters;
@@ -167,7 +168,9 @@ namespace SQLQueryStress
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            ((LoadEngine)e.Argument).StartLoad(backgroundWorker1, (int.TryParse(queryDelay_numericUpDown.Text, out int tmp) ? tmp : 0));
+            _events.Clear();
+            _ganttItems.Clear();
+            ((LoadEngine)e.Argument).StartLoad(backgroundWorker1, (int.TryParse(queryDelay_numericUpDown.Text, out int tmp) ? tmp : 0),this);
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -688,8 +691,11 @@ namespace SQLQueryStress
         {
             switch (m.Msg)
             {
-                case GanttMessages.WM_ONXEVENT:
+                case GanttMessages.WM_ONGANTTUPDATE:
                     ganttChart.FitToData();
+                    break;
+                case GanttMessages.WM_ONXEVENT:
+                    RecalcStats();
                     break;
                 default:
                     base.WndProc(ref m);
@@ -705,7 +711,7 @@ namespace SQLQueryStress
             ganttChart.Dock = DockStyle.Fill;
 
             // Create stats panel
-            var statsPanel = new TableLayoutPanel
+            statsPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
@@ -727,6 +733,55 @@ namespace SQLQueryStress
             tableLayoutPanel3.SetColumnSpan(ganttChart, 1);
         }
 
+        private void RecalcStats()
+        {
+            var minDur = UInt64.MaxValue;
+            var maxDur = UInt64.MinValue;
+            var totDur = (UInt64)0;
+            var eventCount = (UInt64)0;
+            try
+            {
+                foreach (var @event in _events)
+                {
+                    foreach (var ExEvent in @event.Value)
+                    {
+                      //  Debug.WriteLine($"Event=={ExEvent.Name}");
+                        if (ExEvent.Name == "sql_batch_completed")
+                        {
+                            eventCount++;
+                            if(!ExEvent.Fields.TryGetValue("duration", out var odur))
+                            {
+                                continue;
+                            }
+
+                            var duration = (UInt64)odur;
+                            if (duration < minDur) minDur = duration;
+                            if (duration >maxDur ) maxDur = duration;
+                            totDur = duration++;
+
+                        }
+                    }
+                }
+               
+            }
+            catch(Exception ex)
+            {
+                //SWALLOW here : likely to be a change in the IEnumberable that can be ignored
+           
+            }
+
+            if (eventCount > 0)
+            {
+                minDuration_textBox.Text = minDur.ToString();
+                maxDuration_textBox.Text = maxDur.ToString();
+                avgDuration_textBox.Text = (totDur / eventCount).ToString();
+                statsPanel.Invalidate();
+            }
+            
+
+
+
+        }
         private void AddStatsRow(TableLayoutPanel panel, string labelText, Label textBox, int row)
         {
             var label = new Label

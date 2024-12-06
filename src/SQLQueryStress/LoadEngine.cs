@@ -79,14 +79,15 @@ public partial class LoadEngine
         return true;
     }
 
-    public void StartLoad(BackgroundWorker worker, int queryDelay)
+    public void StartLoad(BackgroundWorker worker, int queryDelay,FormMain formMain)
     {
         _queryDelay = queryDelay;
+       
 
-        StartLoad(worker);
+        StartLoad(worker,formMain);
     }
 
-    private void StartLoad(BackgroundWorker worker)
+    private void StartLoad(BackgroundWorker worker,FormMain formMain)
     {
         var useParams = false;
 
@@ -107,7 +108,7 @@ public partial class LoadEngine
         var exEventCTS = new CancellationTokenSource();
         var exToken = exEventCTS.Token;
 
-        _extendedEventsReader = new ExtendedEventsReader(_connectionString, exToken, _events);
+        _extendedEventsReader = new ExtendedEventsReader(_connectionString, exToken, _events,formMain);
         _extendedEventsReader.StartSession().GetAwaiter().GetResult();
         _extendedEventReaderTask = _extendedEventsReader.ReadEventsLoop();
 

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.XEvent.XELite;
+using SQLQueryStress.Controls;
 
 namespace SQLQueryStress;
 
@@ -17,14 +18,16 @@ public class ExtendedEventsReader : IDisposable
     private readonly CancellationToken _cancellationToken;
     private bool _isDisposed;
     private XELiveEventStreamer _reader;
+    private FormMain _formMain;
 
     public ExtendedEventsReader(string connectionString, CancellationToken cancellationToken,
-        ConcurrentDictionary<Guid, List<IXEvent>> events)
+        ConcurrentDictionary<Guid, List<IXEvent>> events,FormMain formMain)
     {
         _connectionString = connectionString;
         _sessionName = $"SQLQueryStress_{DateTime.Now:yyyyMMddHHmmss}";
         _cancellationToken = cancellationToken;
         _events = events;
+        _formMain = formMain;
     }
 
     public void Dispose()
@@ -143,6 +146,7 @@ WITH (MAX_MEMORY=4096 KB,EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,MAX_DISPAT
                     xevent =>
                     {
                         addEventToDictionary(xevent);
+                        GanttMessages.SendONExEvent(_formMain);
                         return Task.CompletedTask;
                     },
                     _cancellationToken);
